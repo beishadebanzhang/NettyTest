@@ -1,6 +1,8 @@
 package com.sunsy.netty.netty.c2.chatroom.protocol;
 
 import com.sunsy.netty.netty.c2.chatroom.message.Message;
+import com.sunsy.netty.netty.c3.serializer.Config;
+import com.sunsy.netty.netty.c3.serializer.Serializer;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,7 +29,8 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         // 2. 1 字节的版本,
         out.writeByte(1);
         // 3. 1 字节的序列化方式 jdk 0 , json 1
-        out.writeByte(0);
+        // out.writeByte(0);
+        out.writeByte(Config.getSerializerAlgorithm().ordinal());
         // 4. 1 字节的指令类型
         out.writeByte(msg.getMessageType());
         // 5. 4 个字节
@@ -35,10 +38,11 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
         // 无意义，对齐填充
         out.writeByte(0xff);
         // 6. 获取内容的字节数组
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bos);
-        oos.writeObject(msg);
-        byte[] bytes = bos.toByteArray();
+//        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//        ObjectOutputStream oos = new ObjectOutputStream(bos);
+//        oos.writeObject(msg);
+//        byte[] bytes = bos.toByteArray();
+        byte[] bytes = Config.getSerializerAlgorithm().serialize(msg);
         // 7. 长度
         out.writeInt(bytes.length);
         // 8. 写入内容
@@ -50,16 +54,20 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         int magicNum = in.readInt();
         byte version = in.readByte();
-        byte serializerType = in.readByte();
+        // byte serializerType = in.readByte();
+        byte serializerAlgorithm = in.readByte();
         byte messageType = in.readByte();
         int sequenceId = in.readInt();
         in.readByte();
         int length = in.readInt();
         byte[] bytes = new byte[length];
         in.readBytes(bytes, 0, length);
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
-        Message message = (Message) ois.readObject();
-        log.debug("{}, {}, {}, {}, {}, {}", magicNum, version, serializerType, messageType, sequenceId, length);
+        Serializer.Algorithm algorithm = Serializer.Algorithm.values()[serializerAlgorithm];
+        Class<?> messageClass = Message.getMessageClass(messageType);
+        Object message = algorithm.deserialize(messageClass, bytes);
+//        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+//        Message message = (Message) ois.readObject();
+        log.debug("{}, {}, {}, {}, {}, {}", magicNum, version, serializerAlgorithm, messageType, sequenceId, length);
         log.debug("{}", message);
         out.add(message);
     }
