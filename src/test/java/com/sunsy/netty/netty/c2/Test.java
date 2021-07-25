@@ -20,6 +20,12 @@ package com.sunsy.netty.netty.c2;
  *      本质是因为TCP是流式协议，消息无边界
  *  解决方案：
  *      短连接，发完一次消息就断开连接 --》 不能处理半包
+ *      定长解码器 FixedLengthFrameDecoder
+ *      分隔符解码器
+ *          行解码器 LineBasedFrameDecoder
+ *          分隔符解码器 DelimiterBasedFrameDecoder
+ *          LTC解码器 LengthFieldBasedFrameDecoder
+ *
  */
 public class Test {
     public static void main(String[] args) {

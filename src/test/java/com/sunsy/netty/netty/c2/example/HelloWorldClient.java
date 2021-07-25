@@ -13,6 +13,21 @@ public class HelloWorldClient {
     private static Logger log = LoggerFactory.getLogger(HelloWorldClient.class);
 
     public static void main(String[] args) {
+        ChannelInboundHandlerAdapter adapter = new ChannelInboundHandlerAdapter() {
+            // 会在channel建立成功后，触发active事件
+            @Override
+            public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                for (int i = 0; i < 10; i ++) {
+                    ByteBuf byteBuf = ctx.alloc().buffer(16);
+                    byteBuf.writeBytes(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
+                    ctx.writeAndFlush(byteBuf);
+                }
+            }
+        };
+        send(adapter);
+    }
+
+    public static void send(ChannelInboundHandlerAdapter adapter) {
         NioEventLoopGroup worker = new NioEventLoopGroup();
         try {
             Bootstrap bootstrap = new Bootstrap();
@@ -21,17 +36,7 @@ public class HelloWorldClient {
             bootstrap.handler(new ChannelInitializer<NioSocketChannel>() {
                 @Override
                 protected void initChannel(NioSocketChannel channel) throws Exception {
-                    channel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-                        // 会在channel建立成功后，触发active事件
-                        @Override
-                        public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                            for (int i = 0; i < 10; i ++) {
-                                ByteBuf byteBuf = ctx.alloc().buffer(16);
-                                byteBuf.writeBytes(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
-                                ctx.writeAndFlush(byteBuf);
-                            }
-                        }
-                    });
+                    channel.pipeline().addLast(adapter);
                 }
             });
             ChannelFuture channelFuture = bootstrap.connect("localhost", 8080).sync();
