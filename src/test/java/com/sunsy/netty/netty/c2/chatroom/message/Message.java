@@ -1,5 +1,7 @@
 package com.sunsy.netty.netty.c2.chatroom.message;
 
+import com.sunsy.netty.netty.c3.rpc.message.RpcRequestMessage;
+import com.sunsy.netty.netty.c3.rpc.message.RpcResponseMessage;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -35,6 +37,11 @@ public abstract class Message implements Serializable {
     public static final int GroupMembersResponseMessage = 13;
     public static final int PingMessage = 14;
     public static final int PongMessage = 15;
+
+    // rpc准备工作
+    public static final int RPC_MESSAGE_REQUEST = 101;
+    public static final int RPC_MESSAGE_RESPONSE = 102;
+
     private static final Map<Integer, Class<?>> messageClasses = new HashMap<>();
 
     static {
@@ -52,5 +59,8 @@ public abstract class Message implements Serializable {
         messageClasses.put(GroupChatResponseMessage, com.sunsy.netty.netty.c2.chatroom.message.GroupChatResponseMessage.class);
         messageClasses.put(GroupMembersRequestMessage, com.sunsy.netty.netty.c2.chatroom.message.GroupMembersRequestMessage.class);
         messageClasses.put(GroupMembersResponseMessage, com.sunsy.netty.netty.c2.chatroom.message.GroupMembersResponseMessage.class);
+
+        messageClasses.put(RPC_MESSAGE_REQUEST, RpcRequestMessage.class);
+        messageClasses.put(RPC_MESSAGE_RESPONSE, RpcResponseMessage.class);
     }
 }
